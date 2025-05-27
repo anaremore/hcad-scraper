@@ -1,0 +1,24 @@
+# HCAD Scraper output files
+hcad_results*.csv
+
+# Account number files (may contain sensitive data)
+accounts*.txt
+
+# Debug HTML files
+debug_html/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -5,13 +5,14 @@ import time
 import os
 import argparse
 from datetime import datetime
+import re
 
 # Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument("--rate", type=float, default=1.0, help="Rate limit between requests (seconds)")
 parser.add_argument("--limit", type=int, default=None, help="Limit number of accounts to process")
+parser.add_argument("--taxyear", type=int, default=datetime.now().year, help="Tax year to scrape (default: current year)")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-parser.add_argument("--taxyear", type=int, default=datetime.now().year, help="Tax year (default: current year)")
 args = parser.parse_args()
 
 # Load account numbers
@@ -23,10 +24,10 @@ if args.limit:
 
 session = requests.Session()
 session.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
     "Referer": "https://public.hcad.org/records/QuickSearch.asp",
     "Origin": "https://public.hcad.org",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "Content-Type": "application/x-www-form-urlencoded"
 })
 
 # Create debug_html directory
@@ -59,41 +60,52 @@ for i, account in enumerate(account_numbers, 1):
         prop_addr_block = soup.find("td", string=lambda x: x and "Property Address" in x)
         property_address = prop_addr_block.find_next("th").get_text(separator=" ", strip=True) if prop_addr_block else "N/A"
 
-        # Valuations (Appraised and Market)
+        # Valuations (Appraised & Market)
         valuation_table = soup.find("th", string=lambda x: x and "Valuations" in x)
+        appraised_current = appraised_previous = market_current = market_previous = "N/A"
         if valuation_table:
-            total_row = valuation_table.find_parent("table").find_all("tr")[-3]
-            cells = total_row.find_all("td")
+            rows = valuation_table.find_parent("table").find_all("tr")
+            total_row = next((row for row in rows if "Total" in row.get_text()), None)
+            if total_row:
+                cells = total_row.find_all("td")
+                market_previous = cells[1].get_text(strip=True).replace(",", "")
+                appraised_previous = cells[2].get_text(strip=True).replace(",", "")
+                market_current = cells[4].get_text(strip=True).replace(",", "")
+                appraised_current = cells[5].get_text(strip=True).replace(",", "")
 
-            appraised_prev = cells[2].get_text(strip=True).replace(",", "")
-            appraised_curr = cells[5].get_text(strip=True).replace(",", "")
-            market_prev = cells[1].get_text(strip=True).replace(",", "")
-            market_curr = cells[4].get_text(strip=True).replace(",", "")
-        else:
-            print(f"[DEBUG] Valuation table not found for {account}")
-            appraised_prev = appraised_curr = market_prev = market_curr = "N/A"
-
-        # Percent Changes
-        def calc_pct_change(current, previous):
+        # Percent Change Calculations
+        def calc_pct(new, old):
             try:
-                return round((float(current) - float(previous)) / float(previous) * 100, 2)
+                return round((float(new) - float(old)) / float(old) * 100, 2)
             except:
                 return "N/A"
 
-        pct_appraised = calc_pct_change(appraised_curr, appraised_prev)
-        pct_market = calc_pct_change(market_curr, market_prev)
+        appraised_pct = calc_pct(appraised_current, appraised_previous)
+        market_pct = calc_pct(market_current, market_previous)
 
-        print(f"✅ {account} | {args.taxyear} Appraised: {appraised_curr} | Prev Appraised: {appraised_prev} | % Change: {pct_appraised} | {args.taxyear} Market: {market_curr} | Prev Market: {market_prev} | % Change: {pct_market}")
+        # Land Area and Total Living Area
+        land_area = total_living_area = "N/A"
+        land_block = soup.find("td", string=lambda x: x and "Land Area" in x)
+        if land_block:
+            row = land_block.find_parent("tr").find_next_sibling("tr")
+            if row:
+                cells = row.find_all("td")
+                land_area = re.sub(r"[^\d]", "", cells[0].get_text(strip=True))
+                total_living_area = re.sub(r"[^\d]", "", cells[1].get_text(strip=True))
+
+        print(f"✅ {account} | Appraised: {appraised_current} | Market: {market_current} | Land: {land_area} | Living: {total_living_area}")
 
         results.append({
             "Account Number": account,
             "Property Address": property_address,
-            f"{args.taxyear} Appraised Value": appraised_curr,
-            f"{args.taxyear - 1} Appraised Value": appraised_prev,
-            "% Change Appraised": pct_appraised,
-            f"{args.taxyear} Market Value": market_curr,
-            f"{args.taxyear - 1} Market Value": market_prev,
-            "% Change Market": pct_market
+            f"{args.taxyear} Appraised Value": appraised_current,
+            f"{args.taxyear - 1} Appraised Value": appraised_previous,
+            "Appraised % Change": appraised_pct,
+            f"{args.taxyear} Market Value": market_current,
+            f"{args.taxyear - 1} Market Value": market_previous,
+            "Market % Change": market_pct,
+            "Land Area": land_area,
+            "Total Living Area": total_living_area
         })
 
     except Exception as e:

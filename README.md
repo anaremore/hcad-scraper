@@ -1,6 +1,6 @@
 # 🏠 HCAD Scraper
 
-A Python scraper for Harris County Appraisal District (HCAD) property data. Extracts appraised and market values for specified account numbers and computes year-over-year percentage changes.
+A Python scraper for Harris County Appraisal District (HCAD) property data. Extracts appraised and market values, land area, and total living area for specified account numbers and computes year-over-year percentage changes.
 
 ## 📋 Features
 
@@ -9,6 +9,8 @@ A Python scraper for Harris County Appraisal District (HCAD) property data. Extr
   * Market Value (Current and Previous Year)
   * Property Address
   * Percent Change for Appraised and Market Values
+  * Land Area (Square Feet)
+  * Total Living Area (Square Feet)
 * Supports:
   * Rate limiting
   * Debug mode (saves raw HTML for inspection)
@@ -76,9 +78,9 @@ python hcad-scraper.py --rate 2 --limit 5 --taxyear 2025 --debug
 
 A CSV file `hcad_results.csv` is generated with:
 
-| Account Number | Property Address | 2025 Appraised Value | 2024 Appraised Value | % Change Appraised | 2025 Market Value | 2024 Market Value | % Change Market |
-|----------------|------------------|----------------------|----------------------|--------------------|-------------------|-------------------|-----------------|
-| 1234567890123 | 123 MAIN ST | 450,000 | 400,000 | 12.50% | 450,000 | 400,000 | 12.50% |
+| Account Number | Property Address | 2025 Appraised Value | 2024 Appraised Value | % Change Appraised | 2025 Market Value | 2024 Market Value | % Change Market | Land Area | Total Living Area |
+|----------------|------------------|----------------------|----------------------|--------------------|-------------------|-------------------|-----------------|-----------|-------------------|
+| 1234567890123 | 123 MAIN ST | 450,000 | 400,000 | 12.50% | 450,000 | 400,000 | 12.50% | 7500 | 2500 |
 | — | — | — | — | — | — | — | — |
 
 ## 🔧 Notes

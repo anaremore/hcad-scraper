@@ -81,7 +81,7 @@ A CSV file `hcad_results.csv` is generated with:
 | Account Number | Property Address | 2025 Appraised Value | 2024 Appraised Value | % Change Appraised | 2025 Market Value | 2024 Market Value | % Change Market | Land Area | Total Living Area |
 |----------------|------------------|----------------------|----------------------|--------------------|-------------------|-------------------|-----------------|-----------|-------------------|
 | 1234567890123 | 123 MAIN ST | 450,000 | 400,000 | 12.50% | 450,000 | 400,000 | 12.50% | 7500 | 2500 |
-| — | — | — | — | — | — | — | — |
+| — | — | — | — | — | — | — | — | — | — |
 
 ## 🔧 Notes
 
